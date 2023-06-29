@@ -1,5 +1,6 @@
 const Article = require("../models/Article");
 const fs = require("fs");
+const path = require("path");
 const { validateArticle } = require("../helpers/validate");
 
 //
@@ -139,6 +140,8 @@ const updateArticle = (req, res) => {
     //
   }
 
+  // * look for and update article
+
   Article.findOneAndUpdate({ _id: id }, parameters, { new: true })
     .then((updatedArticle) => {
       return res.status(200).json({
@@ -165,15 +168,15 @@ const uploadPhoto = (req, res) => {
       .json({ status: "error", message: "Invalid request" });
   }
   // * name of img file:
-  let filename = req.file.originalname;
+  let filenameOriginal = req.file.originalname;
   // * extension of img file(we get it by splitting filename by the dot. ex: "mypic","jpeg"):
-  let fileSplit = filename.split(".");
+  let fileSplit = filenameOriginal.split(".");
   let fileExtension = fileSplit[1];
   // * check that extension is correct:
   if (
-    fileExtension !== "png" ||
-    fileExtension !== "jpg" ||
-    fileExtension !== "jpeg" ||
+    fileExtension !== "png" &&
+    fileExtension !== "jpg" &&
+    fileExtension !== "jpeg" &&
     fileExtension !== "gif"
   ) {
     // * delete file and give respond:
@@ -183,15 +186,53 @@ const uploadPhoto = (req, res) => {
         .json({ status: "error", message: "Invalid file type" });
     });
   } else {
-    return res.status(200).json({
-      status: "success",
-      file: req.file,
-      fileExtension: fileExtension,
-    });
-  }
+    // * if everything goes well then we need to update the article in which the image is being uploaded to:
 
-  // * if everything goes well then we need to update the article in which the image is being uploaded to:
-  // * return response:
+    // * article id as variable :
+    let id = req.params.id;
+
+    // * look for and update article
+    Article.findOneAndUpdate(
+      { _id: id },
+      { image: req.file.filename },
+      { new: true }
+    )
+      .then((updatedArticle) => {
+        // * return response:
+
+        return res.status(200).json({
+          status: "success",
+          article: updatedArticle,
+          uploadedImageFile: req.file,
+        });
+      })
+      .catch((error) => {
+        console.error("Error in uploadPhoto:", error);
+
+        return res.status(500).json({
+          status: "error",
+          message: "There was an error while updating, check server log.",
+        });
+      });
+  }
+};
+
+const getImage = (req, res) => {
+  let chosenImage = req.params.chosenImage; //! REMEBER chosenImage has to match :chosenImage in ROUTES!!!!!!!
+  let physicalPath = `./images/articles/` + chosenImage;
+  fs.stat(physicalPath, (error, exists) => {
+    if (exists) {
+      return res.sendFile(path.resolve(physicalPath));
+    } else {
+      return res.status(404).json({
+        status: "error",
+        message: "image does not exists",
+        exists,
+        chosenImage,
+        physicalPath,
+      });
+    }
+  });
 };
 
 module.exports = {
@@ -202,4 +243,5 @@ module.exports = {
   deleteArticle,
   updateArticle,
   uploadPhoto,
+  getImage,
 };

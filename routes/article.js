@@ -30,5 +30,6 @@ router.post(
   [uploads.single("file0")],
   ArticleController.uploadPhoto
 );
+router.get("/image/:chosenImage", ArticleController.getImage);
 
 module.exports = router;
