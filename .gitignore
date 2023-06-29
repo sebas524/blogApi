@@ -8,6 +8,7 @@ environment.ts
 /tmp
 /out-tsc
 /bazel-out
+/images
 
 # Node
 /node_modules

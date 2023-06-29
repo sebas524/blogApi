@@ -1,4 +1,5 @@
 const Article = require("../models/Article");
+const fs = require("fs");
 const { validateArticle } = require("../helpers/validate");
 
 //
@@ -153,6 +154,46 @@ const updateArticle = (req, res) => {
     });
 };
 
+const uploadPhoto = (req, res) => {
+  // * multer configuration:
+  //// ! done already in routes file!!!
+  // * see file:
+  console.log(req.file);
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ status: "error", message: "Invalid request" });
+  }
+  // * name of img file:
+  let filename = req.file.originalname;
+  // * extension of img file(we get it by splitting filename by the dot. ex: "mypic","jpeg"):
+  let fileSplit = filename.split(".");
+  let fileExtension = fileSplit[1];
+  // * check that extension is correct:
+  if (
+    fileExtension !== "png" ||
+    fileExtension !== "jpg" ||
+    fileExtension !== "jpeg" ||
+    fileExtension !== "gif"
+  ) {
+    // * delete file and give respond:
+    fs.unlink(req.file.path, (err) => {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Invalid file type" });
+    });
+  } else {
+    return res.status(200).json({
+      status: "success",
+      file: req.file,
+      fileExtension: fileExtension,
+    });
+  }
+
+  // * if everything goes well then we need to update the article in which the image is being uploaded to:
+  // * return response:
+};
+
 module.exports = {
   test,
   createArticle,
@@ -160,4 +201,5 @@ module.exports = {
   getArticle,
   deleteArticle,
   updateArticle,
+  uploadPhoto,
 };
