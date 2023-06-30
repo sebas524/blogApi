@@ -235,6 +235,34 @@ const getImage = (req, res) => {
   });
 };
 
+const getArticleBySearchCriteria = (req, res) => {
+  // * get search link:
+  let search = req.params.search;
+  //  * find OR:
+  Article.find({
+    $or: [
+      { title: { $regex: search, $options: "i" } },
+      { content: { $regex: search, $options: "i" } },
+    ],
+  })
+    .sort({ Date: -1 })
+    .then((foundArticles) => {
+      if (foundArticles <= 0) {
+        throw new Error("No articles found");
+      }
+
+      return res.status(200).json({
+        status: "success",
+        foundArticles: foundArticles,
+      });
+    })
+    .catch((err) => {
+      return res
+        .status(404)
+        .json({ status: "error", message: "no articles have been found" });
+    });
+};
+
 module.exports = {
   test,
   createArticle,
@@ -244,4 +272,5 @@ module.exports = {
   updateArticle,
   uploadPhoto,
   getImage,
+  getArticleBySearchCriteria,
 };

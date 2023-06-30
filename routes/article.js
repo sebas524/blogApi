@@ -31,5 +31,6 @@ router.post(
   ArticleController.uploadPhoto
 );
 router.get("/image/:chosenImage", ArticleController.getImage);
+router.get("/search/:search", ArticleController.getArticleBySearchCriteria);
 
 module.exports = router;
